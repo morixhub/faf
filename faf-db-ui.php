@@ -1,6 +1,6 @@
 <?php
 
-function faf_db_table_ui($get, $post, $page_name, $table_name, $keys_labels_array) {
+function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
     // Declare global usages
     global $wpdb;
@@ -34,14 +34,40 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $keys_labels_arra
     if(isset($post['submit']))
     {
         $fields = array();
-        foreach(array_keys($keys_labels_array) as $key)
+        foreach(array_keys($def) as $key)
         {
             if($key == 'id')
                 continue;
 
-            $fields[$key] = $post['ctl_' . $key];
+            if(isset($post['ctl_' . $key]))
+            {
+                switch($def[$key][1])
+                {
+                    case 'bool':
+                        $fields[$key] = ($post['ctl_' . $key] == 'on' ? 1 : 0);
+                        break;
+
+                    default:
+                        $fields[$key] = $post['ctl_' . $key];
+                        break;
+                }                
+            }
+            else
+            {
+                switch($def[$key][1])
+                {
+                    case 'bool':
+                        $fields[$key] = 0;
+                        break;
+
+                    default:
+                        break;
+                }
+            }   
         }
 
+        //!!
+        echo implode(', ', array_values($fields));
         if($wpdb->insert($wpdb->prefix . $table_name, $fields))
             echo 'Record created successfully';
         else
@@ -49,15 +75,15 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $keys_labels_arra
     }
 
     // Prepare query for selecting leagues
-    $query = 'SELECT ' . implode(', ', array_keys($keys_labels_array)) . ' FROM ' . $wpdb->prefix . $table_name;
+    $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name;
     $res = $wpdb->get_results($query, 'ARRAY_A');
 
     // Prepare table header
     echo '<table class="tablebox">';
     echo '<tr>';
-        foreach(array_values($keys_labels_array) as $label)
+        foreach(array_values($def) as $label)
         {
-            echo '<th>' . $label . '</th>';
+            echo '<th>' . $label[0] . '</th>';
         }
         echo '<th>Operations</th>';
     echo '</tr>';
@@ -80,9 +106,27 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $keys_labels_arra
             continue;
 
         echo '<tr>';
-            foreach(array_keys($keys_labels_array) as $key)
+            foreach(array_keys($def) as $key)
             {
-                echo '<td>' . $record[$key] . '</td>';
+                echo '<td>';
+
+                switch($def[$key][1])
+                {
+                    case 'bool':
+                        if((int)$record[$key])
+                            echo '&check;';
+                        break;
+
+                    case 'date':
+                        echo date_create_from_format('Y-m-d H:i:s', $record[$key])->format('d/m/Y');
+                        break;
+
+                    default:
+                        echo $record[$key];
+                        break;
+                }
+
+                echo '</td>';
             }
             echo '<td>' . '<a href="?page=' . $page_name . '&remove=' . $record['id'] . '">Remove</a></td>';
         echo '</tr>';
@@ -110,14 +154,37 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $keys_labels_arra
     // Prepare new record form
     echo '<form action="?page=' . $page_name . '" method="post" enctype="multipart/form-data">';
     echo '<table style="margin-top:50px">';
-    foreach(array_keys($keys_labels_array) as $key)
+    foreach(array_keys($def) as $key)
     {
         if($key == 'id')
             continue;
 
         echo '<tr>';
-            echo '<td>' . $keys_labels_array[$key] . ':</td>';
-            echo '<td><input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '"></td>';
+            echo '<td>' . $def[$key][0] . ':</td>';
+
+            echo '<td>';
+
+            switch($def[$key][1])
+            {
+                case 'bool':
+                    echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '">';
+                    break;
+
+                case 'date':
+                    $defaultDate = date_create('now');
+                    if(array_key_exists(2, $def[$key]))
+                        $defaultDate = $def[$key][2];
+
+                    echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $defaultDate->format('Y-m-d') . '" required>';
+                    break;
+
+                default:
+                    echo '<input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '">';
+                    break;
+            }
+
+            echo '<td>';
+
         echo '</tr>';
     }
     echo '<tr><td>';
