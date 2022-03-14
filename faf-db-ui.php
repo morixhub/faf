@@ -27,7 +27,7 @@ function faf_db_definition_get_field_property($def, $key, $property_name, $prope
         if($is_default_property)
             return($dk);
         else
-            return('invalid_entry');
+            return($default_property_value);
     }        
 
     // If key type exists, then return it...
@@ -210,7 +210,23 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     // Prepare table footer
     echo '</table>';
 
-    // Prepare new record form
+    // Process league update
+    $curr = null;
+    if(isset($get['id']))
+    {
+        $updateId = $get['id'];
+        if(is_numeric($updateId))
+        {
+            // Prepare query for selecting leagues
+            $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = ' . $updateId;
+            $res = $wpdb->get_results($query, 'ARRAY_A');
+
+            if(count($res) == 1)
+                $curr = $res[0];
+        }
+    }
+
+    // Prepare create/update form
     echo '<form action="?page=' . $page_name . '" method="post" enctype="multipart/form-data">';
     echo '<table style="margin-top:50px">';
     foreach(array_keys($def) as $key)
@@ -225,22 +241,42 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
             $fieldType = faf_db_definition_get_field_type($def, $key);
             $default = faf_db_definition_get_field_default($def, $key);
+
+            if($curr != null)
+                $value = $curr[$key];
+            else
+                $value = $default;
+
             switch($fieldType)
             {
                 case 'bool':
-                    echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '">';
+                    $valueBool = false;
+                    if($value != null && (bool)$value)
+                        $valueBool = true;
+
+                    echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '" ' . ($valueBool ? 'checked' : '') . '></input>';
                     break;
 
                 case 'date':
-                    $defaultDate = date_create('now');
-                    if($default != null && ($default instanceof DateTime))
-                        $defaultDate = $default;
+                    if($curr != null)
+                    {
+                        $valueDate = date_create('now');
+                        $value = date_create_from_format('Y-m-d H:i:s', $value);
+                        if($value != null && ($value instanceof DateTime))
+                            $valueDate = $value;
+                    }
+                    else
+                    {
+                        $valueDate = date_create('now');
+                        if($value != null && ($value instanceof DateTime))
+                            $valueDate = $value;
+                    }
 
-                    echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $defaultDate->format('Y-m-d') . '" required>';
+                    echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $valueDate->format('Y-m-d') . '" required></input>';
                     break;
 
                 default:
-                    echo '<input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '">';
+                    echo '<input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '" value="' . $value . '"></input>';
                     break;
             }
 
@@ -249,7 +285,10 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         echo '</tr>';
     }
     echo '<tr><td>';
-    submit_button('Create');
+    if($curr != null)
+        submit_button('Update');
+    else
+        submit_button('Create');
     echo '</td></tr>';
     echo '</table>';
     echo ' </form>';
