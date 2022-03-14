@@ -21,6 +21,7 @@ add_action('admin_menu', 'faf_setup_menu');
 function faf_setup_menu() {
     add_menu_page('faf', 'faf Administration', 'administrator', 'faf_admin_page_slug', 'faf_admin_page');
     add_submenu_page('faf_admin_page_slug', 'leagues', 'Manage leagues', 'administrator', 'faf_admin_leagues_page_slug', 'faf_admin_page_leagues');
+    add_submenu_page('faf_admin_page_slug', 'teams', 'Manage teams', 'administrator', 'faf_admin_teams_page_slug', 'faf_admin_page_teams');
     add_submenu_page('faf_admin_page_slug', 'players', 'Manage players', 'administrator', 'faf_admin_players_page_slug', 'faf_admin_page_players');
 }
 
@@ -39,6 +40,20 @@ function faf_admin_page_leagues() {
             'id' => 'ID',
             'name' => 'League name',
             'description' => 'League description'
+        )
+    );
+}
+
+function faf_admin_page_teams() {
+
+    faf_db_table_ui(
+        $_GET,
+        $_POST,
+        'faf_admin_teams_page_slug',
+        'faf_teams',
+        array(
+            'id' => 'ID',
+            'name' => 'Team name'
         )
     );
 }
