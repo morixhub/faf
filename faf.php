@@ -30,24 +30,20 @@ function faf_admin_page() {
 
 function faf_admin_page_leagues() {
 
-    //!!faf_db_table_ui($_GET, $_POST, 'faf_admin_leagues_page_slug', 'faf_leagues', array('id' => 'ID', 'name' => 'League name', 'description' => 'League description'));
-
     faf_db_table_ui(
         $_GET,
         $_POST,
         'faf_admin_leagues_page_slug',
         'faf_leagues',
         array(
-            'id' => array('ID', 'string'),
-            'name' => array('League name', 'string'),
-            'description' => array('League description', 'string')
+            'id' => 'ID',
+            'name' => 'League name',
+            'description' => 'League description'
         )
     );
 }
 
 function faf_admin_page_players() {
-
-    //!!faf_db_table_ui($_GET, $_POST, 'faf_admin_players_page_slug', 'faf_players', array('id' => 'ID', 'name' => 'Player name', 'surname' => 'Player surname', 'import' => 'Import', 'begin_validity' => 'Begin validity', 'end_validity' => 'End validity'));
 
     faf_db_table_ui(
         $_GET,
@@ -55,12 +51,23 @@ function faf_admin_page_players() {
         'faf_admin_players_page_slug',
         'faf_players',
         array(
-            'id' => array('ID', 'string'),
-            'name' => array('Player name', 'string'),
-            'surname' => array('Player surname', 'string'),
-            'import' => array('Import', 'bool'),
-            'begin_validity' => array('Begin validity', 'date', date_create('now')),
-            'end_validity' => array('End validity', 'date', date_create('now')->add(new DateInterval('P1Y')))
+            'id' => 'ID',
+            'name' => 'Player name',
+            'surname' => 'Player surname',
+            'import' => array(
+                faf_db_constants::field_label => 'Import',
+                faf_db_constants::field_type => 'bool'
+            ),
+            'begin_validity' => array(
+                faf_db_constants::field_label => 'Begin validity',
+                faf_db_constants::field_type => 'date',
+                faf_db_constants::field_default => date_create('now')
+            ),
+            'end_validity' => array(
+                faf_db_constants::field_label => 'End validity',
+                faf_db_constants::field_type => 'date',
+                faf_db_constants::field_default => date_create('now')->add(new DateInterval('P1Y'))
+            )
         )
     );
 

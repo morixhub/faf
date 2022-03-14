@@ -1,5 +1,62 @@
 <?php
 
+class faf_db_constants
+{
+    const field_label = 'label';
+    const field_type = 'type';
+    const field_default = 'default';
+}
+
+function faf_db_definition_get_field_property($def, $key, $property_name, $property_index, $default_property_value, $is_default_property)
+{
+    // Check input
+    if(!is_array($def))
+        return('invalid_array');
+
+    if(!is_string($key))
+        return('invalid_key');
+
+    // Check if given key exists in array
+    if(!array_key_exists($key, $def))
+        return('missing_key');
+
+    // Check entry
+    $dk = $def[$key];
+    if(!is_array($dk))
+    {
+        if($is_default_property)
+            return($dk);
+        else
+            return('invalid_entry');
+    }        
+
+    // If key type exists, then return it...
+    if(array_key_exists($property_name, $dk))
+        return($dk[$property_name]);
+
+    // ...otherwise check for position...
+    if(array_key_exists($property_index, $dk))
+        return($dk[$property_index]);
+
+    // ...otherwise return default
+    return($default_property_value);
+}
+
+function faf_db_definition_get_field_label($def, $key)
+{
+    return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_label, 0, $key, true));
+}
+
+function faf_db_definition_get_field_type($def, $key)
+{
+    return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_type, 1, 'string', false));
+}
+
+function faf_db_definition_get_field_default($def, $key)
+{
+    return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_default, 2, null, false));
+}
+
 function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
     // Declare global usages
@@ -39,9 +96,10 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             if($key == 'id')
                 continue;
 
+            $fieldType = faf_db_definition_get_field_type($def, $key);
             if(isset($post['ctl_' . $key]))
             {
-                switch($def[$key][1])
+                switch($fieldType)
                 {
                     case 'bool':
                         $fields[$key] = ($post['ctl_' . $key] == 'on' ? 1 : 0);
@@ -54,7 +112,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             }
             else
             {
-                switch($def[$key][1])
+                switch($fieldType)
                 {
                     case 'bool':
                         $fields[$key] = 0;
@@ -81,9 +139,9 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     // Prepare table header
     echo '<table class="tablebox">';
     echo '<tr>';
-        foreach(array_values($def) as $label)
+        foreach(array_keys($def) as $key)
         {
-            echo '<th>' . $label[0] . '</th>';
+            echo '<th>' . faf_db_definition_get_field_label($def, $key) . '</th>';
         }
         echo '<th>Operations</th>';
     echo '</tr>';
@@ -110,7 +168,8 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             {
                 echo '<td>';
 
-                switch($def[$key][1])
+                $fieldType = faf_db_definition_get_field_type($def, $key); 
+                switch($fieldType)
                 {
                     case 'bool':
                         if((int)$record[$key])
@@ -160,11 +219,13 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             continue;
 
         echo '<tr>';
-            echo '<td>' . $def[$key][0] . ':</td>';
+            echo '<td>' . faf_db_definition_get_field_label($def, $key) . ':</td>';
 
             echo '<td>';
 
-            switch($def[$key][1])
+            $fieldType = faf_db_definition_get_field_type($def, $key);
+            $default = faf_db_definition_get_field_default($def, $key);
+            switch($fieldType)
             {
                 case 'bool':
                     echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '">';
@@ -172,8 +233,8 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
                 case 'date':
                     $defaultDate = date_create('now');
-                    if(array_key_exists(2, $def[$key]))
-                        $defaultDate = $def[$key][2];
+                    if($default != null && ($default instanceof DateTime))
+                        $defaultDate = $default;
 
                     echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $defaultDate->format('Y-m-d') . '" required>';
                     break;
