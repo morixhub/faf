@@ -90,6 +90,10 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     // Process league insertion
     if(isset($post['submit']))
     {
+        $updateId = 0;
+        if(isset($post['updateId']))
+            $updateId = (int)$post['updateId'];
+
         $fields = array();
         foreach(array_keys($def) as $key)
         {
@@ -124,12 +128,22 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             }   
         }
 
-        //!!
-        echo implode(', ', array_values($fields));
-        if($wpdb->insert($wpdb->prefix . $table_name, $fields))
-            echo 'Record created successfully';
+        if($updateId > 0)
+        {
+            //!!echo implode(', ', array_values($fields));
+            if($wpdb->update($wpdb->prefix . $table_name, $fields, array('id' => $updateId)))
+                echo 'Record updated successfully';
+            else
+                echo 'An error occurred while updating the new record';
+        }
         else
-            echo 'An error occurred while creating the new record';
+        {
+            //!!echo implode(', ', array_values($fields));
+            if($wpdb->insert($wpdb->prefix . $table_name, $fields))
+                echo 'Record created successfully';
+            else
+                echo 'An error occurred while creating the new record';
+        }
     }
 
     // Prepare query for selecting leagues
@@ -187,7 +201,11 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
                 echo '</td>';
             }
-            echo '<td>' . '<a href="?page=' . $page_name . '&remove=' . $record['id'] . '">Remove</a></td>';
+            echo '<td>';
+                echo '<a href="?page=' . $page_name . '&remove=' . $record['id'] . '&offset=' . $offset . '">Remove</a>';
+                echo '&nbsp;';
+                echo '<a href="?page=' . $page_name . '&id=' . $record['id'] . '&offset=' . $offset . '">Modify</a>';
+            echo '</td>';
         echo '</tr>';
 
         $rendered++;
@@ -227,7 +245,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     }
 
     // Prepare create/update form
-    echo '<form action="?page=' . $page_name . '" method="post" enctype="multipart/form-data">';
+    echo '<form action="?page=' . $page_name . '&offset=' . $offset . '" method="post" enctype="multipart/form-data">';
     echo '<table style="margin-top:50px">';
     foreach(array_keys($def) as $key)
     {
@@ -286,10 +304,17 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     }
     echo '<tr><td>';
     if($curr != null)
+    {
         submit_button('Update');
+        echo '<input type="button" value="Cancel" onclick="window.location.href = \'?page='. $page_name . '&offset=' . $offset . '\'"></input>';
+    }
     else
         submit_button('Create');
     echo '</td></tr>';
     echo '</table>';
+
+    if($curr != null)
+        echo '<input type="hidden" id="updateId" name="updateId" value="' . $updateId .'"></input>';
+
     echo ' </form>';
 }
