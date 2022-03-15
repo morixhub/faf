@@ -5,6 +5,7 @@ class faf_db_constants
     const field_label = 'label';
     const field_type = 'type';
     const field_default = 'default';
+    const field_required = 'required';
 }
 
 function faf_db_definition_get_field_property($def, $key, $property_name, $property_index, $default_property_value, $is_default_property)
@@ -55,6 +56,11 @@ function faf_db_definition_get_field_type($def, $key)
 function faf_db_definition_get_field_default($def, $key)
 {
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_default, 2, null, false));
+}
+
+function faf_db_definition_get_field_required($def, $key)
+{
+    return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_required, 3, false, false));
 }
 
 function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
@@ -259,6 +265,9 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
             $fieldType = faf_db_definition_get_field_type($def, $key);
             $default = faf_db_definition_get_field_default($def, $key);
+            $required = '';
+            if(faf_db_definition_get_field_required($def, $key))
+                $required = 'required';
 
             if($curr != null)
                 $value = $curr[$key];
@@ -272,7 +281,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
                     if($value != null && (bool)$value)
                         $valueBool = true;
 
-                    echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '" ' . ($valueBool ? 'checked' : '') . '></input>';
+                    echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '" ' . ($valueBool ? 'checked' : '') . ' ' . $required . '></input>';
                     break;
 
                 case 'date':
@@ -290,11 +299,11 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
                             $valueDate = $value;
                     }
 
-                    echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $valueDate->format('Y-m-d') . '" required></input>';
+                    echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $valueDate->format('Y-m-d') . '" ' . $required .'></input>';
                     break;
 
                 default:
-                    echo '<input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '" value="' . $value . '"></input>';
+                    echo '<input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '" value="' . $value . '" ' . $required . '></input>';
                     break;
             }
 

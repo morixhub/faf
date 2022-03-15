@@ -38,7 +38,10 @@ function faf_admin_page_leagues() {
         'faf_leagues',
         array(
             'id' => 'ID',
-            'name' => 'League name',
+            'name' => array(
+                faf_db_constants::field_label => 'League name',
+                faf_db_constants::field_required => true
+            ),
             'description' => 'League description'
         )
     );
@@ -53,7 +56,10 @@ function faf_admin_page_teams() {
         'faf_teams',
         array(
             'id' => 'ID',
-            'name' => 'Team name'
+            'name' => array(
+                faf_db_constants::field_label => 'Team name',
+                faf_db_constants::field_required => true
+            )
         )
     );
 }
@@ -67,8 +73,14 @@ function faf_admin_page_players() {
         'faf_players',
         array(
             'id' => 'ID',
-            'name' => 'Player name',
-            'surname' => 'Player surname',
+            'name' => array(
+                faf_db_constants::field_label => 'Player name',
+                faf_db_constants::field_required => true
+            ),
+            'surname' => array(
+                faf_db_constants::field_label => 'Player surname',
+                faf_db_constants::field_required => true
+            ),
             'import' => array(
                 faf_db_constants::field_label => 'Import',
                 faf_db_constants::field_type => 'bool'
@@ -76,12 +88,14 @@ function faf_admin_page_players() {
             'begin_validity' => array(
                 faf_db_constants::field_label => 'Begin validity',
                 faf_db_constants::field_type => 'date',
-                faf_db_constants::field_default => date_create('now')
+                faf_db_constants::field_default => date_create('now'),
+                faf_db_constants::field_required => true
             ),
             'end_validity' => array(
                 faf_db_constants::field_label => 'End validity',
                 faf_db_constants::field_type => 'date',
-                faf_db_constants::field_default => date_create('now')->add(new DateInterval('P1Y'))
+                faf_db_constants::field_default => date_create('now')->add(new DateInterval('P1Y')),
+                faf_db_constants::field_required => true
             )
         )
     );
