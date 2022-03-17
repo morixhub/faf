@@ -37,7 +37,10 @@ function faf_admin_page_leagues() {
         'faf_admin_leagues_page_slug',
         'faf_leagues',
         array(
-            'id' => 'ID',
+            'id' => array(
+                faf_db_constants::field_label => 'ID',
+                faf_db_constants::field_type => faf_db_constants::field_type_id
+            ),
             'name' => array(
                 faf_db_constants::field_label => 'League name',
                 faf_db_constants::field_required => true
@@ -55,7 +58,10 @@ function faf_admin_page_teams() {
         'faf_admin_teams_page_slug',
         'faf_teams',
         array(
-            'id' => 'ID',
+            'id' => array(
+                faf_db_constants::field_label => 'ID',
+                faf_db_constants::field_type => faf_db_constants::field_type_id
+            ),
             'name' => array(
                 faf_db_constants::field_label => 'Team name',
                 faf_db_constants::field_required => true
@@ -72,7 +78,10 @@ function faf_admin_page_players() {
         'faf_admin_players_page_slug',
         'faf_players',
         array(
-            'id' => 'ID',
+            'id' => array(
+                faf_db_constants::field_label => 'ID',
+                faf_db_constants::field_type => faf_db_constants::field_type_id
+            ),
             'name' => array(
                 faf_db_constants::field_label => 'Player name',
                 faf_db_constants::field_required => true
@@ -83,17 +92,17 @@ function faf_admin_page_players() {
             ),
             'import' => array(
                 faf_db_constants::field_label => 'Import',
-                faf_db_constants::field_type => 'bool'
+                faf_db_constants::field_type => faf_db_constants::field_type_bool
             ),
             'begin_validity' => array(
                 faf_db_constants::field_label => 'Begin validity',
-                faf_db_constants::field_type => 'date',
+                faf_db_constants::field_type => faf_db_constants::field_type_date,
                 faf_db_constants::field_default => date_create('now'),
                 faf_db_constants::field_required => true
             ),
             'end_validity' => array(
                 faf_db_constants::field_label => 'End validity',
-                faf_db_constants::field_type => 'date',
+                faf_db_constants::field_type => faf_db_constants::field_type_date,
                 faf_db_constants::field_default => date_create('now')->add(new DateInterval('P1Y')),
                 faf_db_constants::field_required => true
             )

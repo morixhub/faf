@@ -6,6 +6,12 @@ class faf_db_constants
     const field_type = 'type';
     const field_default = 'default';
     const field_required = 'required';
+
+    const field_type_id = 'id';
+    const field_type_string = 'string';
+    const field_type_bool = 'bool';
+    const field_type_int = 'int';
+    const field_type_date = 'date';
 }
 
 function faf_db_definition_get_field_property($def, $key, $property_name, $property_index, $default_property_value, $is_default_property)
@@ -43,6 +49,22 @@ function faf_db_definition_get_field_property($def, $key, $property_name, $prope
     return($default_property_value);
 }
 
+function faf_db_definition_get_id_key($def)
+{
+    foreach(array_keys($def) as $key)
+    {
+        if(faf_db_definition_field_is_id($def, $key))
+            return($key);
+    }
+
+    return(null);
+}
+
+function faf_db_definition_field_is_id($def, $key)
+{
+    return(faf_db_definition_get_field_type($def, $key) == 'id');
+}
+
 function faf_db_definition_get_field_label($def, $key)
 {
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_label, 0, $key, true));
@@ -71,6 +93,16 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     $offset = 0;
     $max_count = 50;
 
+    // Check table ID availability
+    $idKey = faf_db_definition_get_id_key($def);
+
+    if($idKey == null)
+    {
+        echo 'Error: DB definition specified for ' . $table_name . ' does not expose a valid key';
+        return;
+    }
+
+    // Handle offset
     if(isset($get['offset']))
     {
         $offset = $get['offset'];
@@ -86,14 +118,14 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         $removeId = $get['remove'];
         if(is_numeric($removeId))
         {
-            if($wpdb->delete($wpdb->prefix . $table_name, array('id' => $removeId)))
+            if($wpdb->delete($wpdb->prefix . $table_name, array($idKey => $removeId)))
                 echo 'Record ID ' . $removeId . ' was removed successfully';
             else
                 echo 'An error occurred while removing record ID ' . $removeId;
         }
     }
     
-    // Process league insertion
+    // Process entity insertion
     if(isset($post['submit']))
     {
         $updateId = 0;
@@ -103,15 +135,17 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         $fields = array();
         foreach(array_keys($def) as $key)
         {
-            if($key == 'id')
+            // If the key is an ID then it has to be excluded by insert statement
+            if(faf_db_definition_field_is_id($def, $key))
                 continue;
 
             $fieldType = faf_db_definition_get_field_type($def, $key);
+
             if(isset($post['ctl_' . $key]))
             {
                 switch($fieldType)
                 {
-                    case 'bool':
+                    case faf_db_constants::field_type_bool:
                         $fields[$key] = ($post['ctl_' . $key] == 'on' ? 1 : 0);
                         break;
 
@@ -124,7 +158,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             {
                 switch($fieldType)
                 {
-                    case 'bool':
+                    case faf_db_constants::field_type_bool:
                         $fields[$key] = 0;
                         break;
 
@@ -137,7 +171,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         if($updateId > 0)
         {
             //!!echo implode(', ', array_values($fields));
-            if($wpdb->update($wpdb->prefix . $table_name, $fields, array('id' => $updateId)))
+            if($wpdb->update($wpdb->prefix . $table_name, $fields, array($idKey => $updateId)))
                 echo 'Record updated successfully';
             else
                 echo 'An error occurred while updating the new record';
@@ -191,12 +225,12 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
                 $fieldType = faf_db_definition_get_field_type($def, $key); 
                 switch($fieldType)
                 {
-                    case 'bool':
+                    case faf_db_constants::field_type_bool:
                         if((int)$record[$key])
                             echo '&check;';
                         break;
 
-                    case 'date':
+                    case faf_db_constants::field_type_date:
                         echo date_create_from_format('Y-m-d H:i:s', $record[$key])->format('d/m/Y');
                         break;
 
@@ -208,9 +242,9 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
                 echo '</td>';
             }
             echo '<td>';
-                echo '<a href="?page=' . $page_name . '&remove=' . $record['id'] . '&offset=' . $offset . '">Remove</a>';
+                echo '<a href="?page=' . $page_name . '&remove=' . $record[$idKey] . '&offset=' . $offset . '">Remove</a>';
                 echo '&nbsp;';
-                echo '<a href="?page=' . $page_name . '&id=' . $record['id'] . '&offset=' . $offset . '">Modify</a>';
+                echo '<a href="?page=' . $page_name . '&id=' . $record[$idKey] . '&offset=' . $offset . '">Modify</a>';
             echo '</td>';
         echo '</tr>';
 
@@ -234,11 +268,11 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     // Prepare table footer
     echo '</table>';
 
-    // Process league update
+    // Process entity update
     $curr = null;
-    if(isset($get['id']))
+    if(isset($get[$idKey]))
     {
-        $updateId = $get['id'];
+        $updateId = $get[$idKey];
         if(is_numeric($updateId))
         {
             // Prepare query for selecting leagues
@@ -255,7 +289,8 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     echo '<table style="margin-top:50px">';
     foreach(array_keys($def) as $key)
     {
-        if($key == 'id')
+        // If key is an ID then it has not to be layouted in create/update form
+        if(faf_db_definition_field_is_id($def, $key))
             continue;
 
         echo '<tr>';
@@ -276,7 +311,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
             switch($fieldType)
             {
-                case 'bool':
+                case faf_db_constants::field_type_bool:
                     $valueBool = false;
                     if($value != null && (bool)$value)
                         $valueBool = true;
@@ -284,7 +319,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
                     echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '" ' . ($valueBool ? 'checked' : '') . ' ' . $required . '></input>';
                     break;
 
-                case 'date':
+                case faf_db_constants::field_type_date:
                     if($curr != null)
                     {
                         $valueDate = date_create('now');
