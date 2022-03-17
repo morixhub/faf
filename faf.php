@@ -94,6 +94,10 @@ function faf_admin_page_players() {
                 faf_db_constants::field_label => 'Import',
                 faf_db_constants::field_type => faf_db_constants::field_type_bool
             ),
+            'id_current_team' => array(
+                faf_db_constants::field_label => 'Current team',
+                faf_db_constants::field_source => 'faf_data_source_teams'
+            ),
             'begin_validity' => array(
                 faf_db_constants::field_label => 'Begin validity',
                 faf_db_constants::field_type => faf_db_constants::field_type_date,
@@ -127,6 +131,23 @@ function faf_admin_page_players() {
         submit_button('Upload File');
     echo ' </form>';
     */
+}
+
+function faf_data_source_teams() {
+
+    // Declare global usages
+    global $wpdb;
+    
+    // Prepare query for selecting entities
+    $query = 'SELECT id, name FROM ' . $wpdb->prefix . 'faf_teams';
+    $res = $wpdb->get_results($query, 'ARRAY_A');
+
+    // Collect
+    $r = array();
+    foreach(array_values($res) as $record)
+        $r[$record['id']] = $record['name'];
+
+    return($r);
 }
 
 function file_upload_action() {

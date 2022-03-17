@@ -6,6 +6,7 @@ class faf_db_constants
     const field_type = 'type';
     const field_default = 'default';
     const field_required = 'required';
+    const field_source = 'source';
 
     const field_type_id = 'id';
     const field_type_string = 'string';
@@ -85,11 +86,17 @@ function faf_db_definition_get_field_required($def, $key)
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_required, 3, false, false));
 }
 
+function faf_db_definition_get_field_source($def, $key)
+{
+    return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_source, 4, null, false));
+}
+
 function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
     // Declare global usages
     global $wpdb;
 
+    // Declare vars
     $offset = 0;
     $max_count = 50;
 
@@ -100,6 +107,25 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     {
         echo 'Error: DB definition specified for ' . $table_name . ' does not expose a valid key';
         return;
+    }
+
+    // Process sources
+    $sources = array();
+
+    foreach(array_keys($def) as $key)
+    {
+        $source = faf_db_definition_get_field_source($def, $key);
+
+        if($source != null)
+        {
+            if(!is_callable($source))
+            {
+                echo 'Error: invalid callable for key ' . $key . ': ' . $source;
+                return;   
+            }
+            
+            $sources[$key] = call_user_func($source);
+        }
     }
 
     // Handle offset
@@ -140,30 +166,48 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
                 continue;
 
             $fieldType = faf_db_definition_get_field_type($def, $key);
+            $source = faf_db_definition_get_field_source($def, $key);
 
             if(isset($post['ctl_' . $key]))
             {
-                switch($fieldType)
+                if($source != null)
                 {
-                    case faf_db_constants::field_type_bool:
-                        $fields[$key] = ($post['ctl_' . $key] == 'on' ? 1 : 0);
-                        break;
-
-                    default:
+                    if($post['ctl_' . $key] == 'null')
+                        $fields[$key] = null;
+                    else
                         $fields[$key] = $post['ctl_' . $key];
-                        break;
+                }
+                else
+                {
+                    switch($fieldType)
+                    {
+                        case faf_db_constants::field_type_bool:
+                            $fields[$key] = ($post['ctl_' . $key] == 'on' ? 1 : 0);
+                            break;
+
+                        default:
+                            $fields[$key] = $post['ctl_' . $key];
+                            break;
+                    }
                 }                
             }
             else
             {
-                switch($fieldType)
+                if($source != null)
                 {
-                    case faf_db_constants::field_type_bool:
-                        $fields[$key] = 0;
-                        break;
+                    $fields[$key] = null;
+                }
+                else
+                {
+                    switch($fieldType)
+                    {
+                        case faf_db_constants::field_type_bool:
+                            $fields[$key] = 0;
+                            break;
 
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
                 }
             }   
         }
@@ -186,7 +230,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         }
     }
 
-    // Prepare query for selecting leagues
+    // Prepare data
     $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name;
     $res = $wpdb->get_results($query, 'ARRAY_A');
 
@@ -222,21 +266,30 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             {
                 echo '<td>';
 
-                $fieldType = faf_db_definition_get_field_type($def, $key); 
-                switch($fieldType)
+                $source = faf_db_definition_get_field_source($def, $key);
+                if($source != null)
                 {
-                    case faf_db_constants::field_type_bool:
-                        if((int)$record[$key])
-                            echo '&check;';
-                        break;
+                    if(isset($sources[$key], $record[$key]))
+                        echo $sources[$key][$record[$key]];
+                }
+                else
+                {
+                    $fieldType = faf_db_definition_get_field_type($def, $key); 
+                    switch($fieldType)
+                    {
+                        case faf_db_constants::field_type_bool:
+                            if((int)$record[$key])
+                                echo '&check;';
+                            break;
 
-                    case faf_db_constants::field_type_date:
-                        echo date_create_from_format('Y-m-d H:i:s', $record[$key])->format('d/m/Y');
-                        break;
+                        case faf_db_constants::field_type_date:
+                            echo date_create_from_format('Y-m-d H:i:s', $record[$key])->format('d/m/Y');
+                            break;
 
-                    default:
-                        echo $record[$key];
-                        break;
+                        default:
+                            echo $record[$key];
+                            break;
+                    }
                 }
 
                 echo '</td>';
@@ -275,7 +328,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         $updateId = $get[$idKey];
         if(is_numeric($updateId))
         {
-            // Prepare query for selecting leagues
+            // Prepare query for selecting entities
             $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = ' . $updateId;
             $res = $wpdb->get_results($query, 'ARRAY_A');
 
@@ -309,37 +362,54 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             else
                 $value = $default;
 
-            switch($fieldType)
+            $source = faf_db_definition_get_field_source($def, $key);
+            if($source != null)
             {
-                case faf_db_constants::field_type_bool:
-                    $valueBool = false;
-                    if($value != null && (bool)$value)
-                        $valueBool = true;
+                echo '<select name="ctl_' . $key . '" id="ctl_' . $key . '">';
+                $s = $sources[$key];
 
-                    echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '" ' . ($valueBool ? 'checked' : '') . ' ' . $required . '></input>';
-                    break;
+                if(!faf_db_definition_get_field_required($def, $key))
+                    echo '<option value="null" ' . ($value == null ? 'selected' : '') . '>(none)</option>';
 
-                case faf_db_constants::field_type_date:
-                    if($curr != null)
-                    {
-                        $valueDate = date_create('now');
-                        $value = date_create_from_format('Y-m-d H:i:s', $value);
-                        if($value != null && ($value instanceof DateTime))
-                            $valueDate = $value;
-                    }
-                    else
-                    {
-                        $valueDate = date_create('now');
-                        if($value != null && ($value instanceof DateTime))
-                            $valueDate = $value;
-                    }
+                foreach(array_keys($s) as $k)
+                    echo '<option value="' . $k . '" ' . ($value == $k ? 'selected' : '') . '>' . $s[$k] . '</option>'; 
+                
+                echo '</select>';
+            }
+            else
+            {
+                switch($fieldType)
+                {
+                    case faf_db_constants::field_type_bool:
+                        $valueBool = false;
+                        if($value != null && (bool)$value)
+                            $valueBool = true;
 
-                    echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $valueDate->format('Y-m-d') . '" ' . $required .'></input>';
-                    break;
+                        echo '<input type="checkbox" name="ctl_' . $key . '" id="ctl_' . $key . '" ' . ($valueBool ? 'checked' : '') . ' ' . $required . '></input>';
+                        break;
 
-                default:
-                    echo '<input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '" value="' . $value . '" ' . $required . '></input>';
-                    break;
+                    case faf_db_constants::field_type_date:
+                        if($curr != null)
+                        {
+                            $valueDate = date_create('now');
+                            $value = date_create_from_format('Y-m-d H:i:s', $value);
+                            if($value != null && ($value instanceof DateTime))
+                                $valueDate = $value;
+                        }
+                        else
+                        {
+                            $valueDate = date_create('now');
+                            if($value != null && ($value instanceof DateTime))
+                                $valueDate = $value;
+                        }
+
+                        echo '<input type="date" name="ctl_' . $key . '" id="ctl_' . $key . '" min="2000-01-01" max="2099-12-31" value="' . $valueDate->format('Y-m-d') . '" ' . $required .'></input>';
+                        break;
+
+                    default:
+                        echo '<input type="text" name="ctl_' . $key . '" id="ctl_' . $key . '" value="' . $value . '" ' . $required . '></input>';
+                        break;
+                }
             }
 
             echo '<td>';
