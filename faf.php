@@ -20,34 +20,15 @@ add_action('admin_menu', 'faf_setup_menu');
 
 function faf_setup_menu() {
     add_menu_page('faf', 'faf Administration', 'administrator', 'faf_admin_page_slug', 'faf_admin_page');
-    add_submenu_page('faf_admin_page_slug', 'leagues', 'Manage leagues', 'administrator', 'faf_admin_leagues_page_slug', 'faf_admin_page_leagues');
     add_submenu_page('faf_admin_page_slug', 'teams', 'Manage teams', 'administrator', 'faf_admin_teams_page_slug', 'faf_admin_page_teams');
     add_submenu_page('faf_admin_page_slug', 'players', 'Manage players', 'administrator', 'faf_admin_players_page_slug', 'faf_admin_page_players');
+    add_submenu_page('faf_admin_page_slug', 'roles', 'Manage player roles', 'administrator', 'faf_admin_player_roles_page_slug', 'faf_admin_page_player_roles');
+    add_submenu_page('faf_admin_page_slug', 'leagues', 'Manage leagues', 'administrator', 'faf_admin_leagues_page_slug', 'faf_admin_page_leagues');
+    add_submenu_page('faf_admin_page_slug', 'league_rounds', 'Manage league rounds', 'administrator', 'faf_admin_league_rounds_page_slug', 'faf_admin_page_league_rounds');
 }
 
 function faf_admin_page() {
     echo "<h1>faf Administration Panel</h1>";
-}
-
-function faf_admin_page_leagues() {
-
-    faf_db_table_ui(
-        $_GET,
-        $_POST,
-        'faf_admin_leagues_page_slug',
-        'faf_leagues',
-        array(
-            'id' => array(
-                faf_db_constants::field_label => 'ID',
-                faf_db_constants::field_type => faf_db_constants::field_type_id
-            ),
-            'name' => array(
-                faf_db_constants::field_label => 'League name',
-                faf_db_constants::field_required => true
-            ),
-            'description' => 'League description'
-        )
-    );
 }
 
 function faf_admin_page_teams() {
@@ -112,25 +93,84 @@ function faf_admin_page_players() {
             )
         )
     );
+}
 
-    /*
-    // Check whether the button has been pressed AND also check the nonce
-    if (isset($_POST['submit'])){
+function faf_admin_page_player_roles() {
 
-        echo '<p>File upload button was clicked!</p>';
-        // the button has been pressed AND we've passed the security check
-        file_upload_action();
-    }
+    faf_db_table_ui(
+        $_GET,
+        $_POST,
+        'faf_admin_player_roles_page_slug',
+        'faf_roles',
+        array(
+            'id' => array(
+                faf_db_constants::field_label => 'ID',
+                faf_db_constants::field_type => faf_db_constants::field_type_id
+            ),
+            'label' => array(
+                faf_db_constants::field_label => 'Role label',
+                faf_db_constants::field_required => true
+            )
+        )
+    );
+}
 
-    echo '<form action="?page=faf_admin_players_page_slug" method="post" enctype="multipart/form-data">';
+function faf_admin_page_leagues() {
 
-        echo '<p>Upload a File:</p>';
+    faf_db_table_ui(
+        $_GET,
+        $_POST,
+        'faf_admin_leagues_page_slug',
+        'faf_leagues',
+        array(
+            'id' => array(
+                faf_db_constants::field_label => 'ID',
+                faf_db_constants::field_type => faf_db_constants::field_type_id
+            ),
+            'name' => array(
+                faf_db_constants::field_label => 'League name',
+                faf_db_constants::field_required => true
+            ),
+            'description' => 'League description'
+        )
+    );
+}
 
-        echo '<input type="file" name="myfile" id="fileToUpload">';
-        echo '<input type="hidden" name="submit">';
-        submit_button('Upload File');
-    echo ' </form>';
-    */
+function faf_admin_page_league_rounds() {
+
+    faf_db_table_ui(
+        $_GET,
+        $_POST,
+        'faf_admin_league_rounds_page_slug',
+        'faf_league_rounds',
+        array(
+            'id' => array(
+                faf_db_constants::field_label => 'ID',
+                faf_db_constants::field_type => faf_db_constants::field_type_id
+            ),
+            'id_league' => array(
+                faf_db_constants::field_label => 'League',
+                faf_db_constants::field_source => 'faf_data_source_leagues',
+                faf_db_constants::field_required => true
+            ),
+            'round_name' => array(
+                faf_db_constants::field_label => 'Round name',
+                faf_db_constants::field_required => true
+            ),
+            'opening' => array(
+                faf_db_constants::field_label => 'Opening date',
+                faf_db_constants::field_type => faf_db_constants::field_type_date,
+                faf_db_constants::field_default => date_create('now'),
+                faf_db_constants::field_required => true
+            ),
+            'closing' => array(
+                faf_db_constants::field_label => 'Closing date',
+                faf_db_constants::field_type => faf_db_constants::field_type_date,
+                faf_db_constants::field_default => date_create('now')->add(new DateInterval('P2W')),
+                faf_db_constants::field_required => true
+            )
+        )
+    );
 }
 
 function faf_data_source_teams() {
@@ -140,6 +180,23 @@ function faf_data_source_teams() {
     
     // Prepare query for selecting entities
     $query = 'SELECT id, name FROM ' . $wpdb->prefix . 'faf_teams';
+    $res = $wpdb->get_results($query, 'ARRAY_A');
+
+    // Collect
+    $r = array();
+    foreach(array_values($res) as $record)
+        $r[$record['id']] = $record['name'];
+
+    return($r);
+}
+
+function faf_data_source_leagues() {
+
+    // Declare global usages
+    global $wpdb;
+    
+    // Prepare query for selecting entities
+    $query = 'SELECT id, name FROM ' . $wpdb->prefix . 'faf_leagues';
     $res = $wpdb->get_results($query, 'ARRAY_A');
 
     // Collect

@@ -154,9 +154,9 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     // Process entity insertion
     if(isset($post['submit']))
     {
-        $updateId = 0;
+        $updateId = NULL;
         if(isset($post['updateId']))
-            $updateId = (int)$post['updateId'];
+            $updateId = $post['updateId'];
 
         $fields = array();
         foreach(array_keys($def) as $key)
@@ -212,9 +212,8 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
             }   
         }
 
-        if($updateId > 0)
+        if($updateId != NULL)
         {
-            //!!echo implode(', ', array_values($fields));
             if($wpdb->update($wpdb->prefix . $table_name, $fields, array($idKey => $updateId)))
                 echo 'Record updated successfully';
             else
@@ -222,7 +221,6 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         }
         else
         {
-            //!!echo implode(', ', array_values($fields));
             if($wpdb->insert($wpdb->prefix . $table_name, $fields))
                 echo 'Record created successfully';
             else
@@ -326,10 +324,13 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     if(isset($get[$idKey]))
     {
         $updateId = $get[$idKey];
-        if(is_numeric($updateId))
+        if($updateId != NULL)
         {
             // Prepare query for selecting entities
-            $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = ' . $updateId;
+            if(is_numeric($updateId))
+                $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = ' . $updateId;
+            else
+                $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = "' . $updateId . '"';
             $res = $wpdb->get_results($query, 'ARRAY_A');
 
             if(count($res) == 1)
