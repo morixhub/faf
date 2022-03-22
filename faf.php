@@ -77,7 +77,9 @@ function faf_admin_page_players() {
             ),
             'id_current_team' => array(
                 faf_db_constants::field_label => 'Current team',
-                faf_db_constants::field_source => 'faf_data_source_teams'
+                faf_db_constants::field_source => function() {
+                    return(faf_data_source_teams());
+                }
             ),
             'begin_validity' => array(
                 faf_db_constants::field_label => 'Begin validity',
@@ -150,7 +152,9 @@ function faf_admin_page_league_rounds() {
             ),
             'id_league' => array(
                 faf_db_constants::field_label => 'League',
-                faf_db_constants::field_source => 'faf_data_source_leagues',
+                faf_db_constants::field_source => function() {
+                    return(faf_data_source_leagues());
+                },
                 faf_db_constants::field_required => true
             ),
             'round_name' => array(
