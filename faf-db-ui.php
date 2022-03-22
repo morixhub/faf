@@ -7,12 +7,32 @@ class faf_db_constants
     const field_default = 'default';
     const field_required = 'required';
     const field_source = 'source';
+    const field_calculate = 'calculate';
 
     const field_type_id = 'id';
     const field_type_string = 'string';
     const field_type_bool = 'bool';
     const field_type_int = 'int';
     const field_type_date = 'date';
+
+    const main_query_name = 'MAIN_QUERY';
+}
+
+function faf_db_definition_non_calculated_keys($def)
+{
+    $res = array();
+
+    foreach(array_keys($def) as $key)
+    {
+        // Calculated fields are excluded for collection
+        if(faf_db_definition_field_is_calculated($def, $key))
+            continue;
+
+        // Collect key
+        array_push($res, $key);
+    }
+
+    return($res);
 }
 
 function faf_db_definition_get_field_property($def, $key, $property_name, $property_index, $default_property_value, $is_default_property)
@@ -66,6 +86,11 @@ function faf_db_definition_field_is_id($def, $key)
     return(faf_db_definition_get_field_type($def, $key) == 'id');
 }
 
+function faf_db_definition_field_is_calculated($def, $key)
+{
+    return(faf_db_definition_get_field_calculate($def, $key) != null);
+}
+
 function faf_db_definition_get_field_label($def, $key)
 {
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_label, 0, $key, true));
@@ -89,6 +114,11 @@ function faf_db_definition_get_field_required($def, $key)
 function faf_db_definition_get_field_source($def, $key)
 {
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_source, 4, null, false));
+}
+
+function faf_db_definition_get_field_calculate($def, $key)
+{
+    return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_calculate, 5, null, false));
 }
 
 function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
@@ -161,8 +191,12 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         $fields = array();
         foreach(array_keys($def) as $key)
         {
-            // If the key is an ID then it has to be excluded by insert statement
+            // If the key is an ID then it has to be excluded by insert/update statement
             if(faf_db_definition_field_is_id($def, $key))
+                continue;
+
+            // If the key represents a calculated field then it has to be excluded by insert/update statement
+            if(faf_db_definition_field_is_calculated($def, $key))
                 continue;
 
             $fieldType = faf_db_definition_get_field_type($def, $key);
@@ -229,7 +263,16 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     }
 
     // Prepare data
-    $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name;
+    $queryItems = faf_db_definition_non_calculated_keys($def);
+
+    foreach(array_keys($def) as $key)
+    {
+        $calculate = faf_db_definition_get_field_calculate($def, $key);
+        if($calculate != null)
+            array_push($queryItems, $calculate . ' AS ' . $key);
+    }
+
+    $query = 'SELECT ' . implode(', ', $queryItems) . ' FROM ' . $wpdb->prefix . $table_name . ' AS ' . faf_db_constants::main_query_name;
     $res = $wpdb->get_results($query, 'ARRAY_A');
 
     // Prepare table header
@@ -327,10 +370,12 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
         if($updateId != NULL)
         {
             // Prepare query for selecting entities
+            $queryItems = faf_db_definition_non_calculated_keys($def);
+
             if(is_numeric($updateId))
-                $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = ' . $updateId;
+                $query = 'SELECT ' . implode(', ', $queryItems) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = ' . $updateId;
             else
-                $query = 'SELECT ' . implode(', ', array_keys($def)) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = "' . $updateId . '"';
+                $query = 'SELECT ' . implode(', ', $queryItems) . ' FROM ' . $wpdb->prefix . $table_name . ' WHERE id = "' . $updateId . '"';
             $res = $wpdb->get_results($query, 'ARRAY_A');
 
             if(count($res) == 1)
@@ -341,10 +386,15 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     // Prepare create/update form
     echo '<form action="?page=' . $page_name . '&offset=' . $offset . '" method="post" enctype="multipart/form-data">';
     echo '<table style="margin-top:50px">';
-    foreach(array_keys($def) as $key)
+    
+    foreach(faf_db_definition_non_calculated_keys($def) as $key)
     {
         // If key is an ID then it has not to be layouted in create/update form
         if(faf_db_definition_field_is_id($def, $key))
+            continue;
+
+        // If the key represents a calculated field then it has to be excluded by insert/update statement
+        if(faf_db_definition_field_is_calculated($def, $key))
             continue;
 
         echo '<tr>';

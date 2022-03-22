@@ -53,6 +53,8 @@ function faf_admin_page_teams() {
 
 function faf_admin_page_players() {
 
+    global $wpdb;
+
     faf_db_table_ui(
         $_GET,
         $_POST,
@@ -70,6 +72,10 @@ function faf_admin_page_players() {
             'surname' => array(
                 faf_db_constants::field_label => 'Player surname',
                 faf_db_constants::field_required => true
+            ),
+            'roles' => array(
+                faf_db_constants::field_label => 'Roles',
+                faf_db_constants::field_calculate => '(SELECT GROUP_CONCAT(id_role SEPARATOR \', \') FROM ' . $wpdb->prefix . 'faf_players_roles WHERE id_player = ' . faf_db_constants::main_query_name . '.id GROUP BY id_player)'
             ),
             'import' => array(
                 faf_db_constants::field_label => 'Import',
