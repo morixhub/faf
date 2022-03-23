@@ -121,7 +121,7 @@ function faf_db_definition_get_field_calculate($def, $key)
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_calculate, 5, null, false));
 }
 
-function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
+function faf_db_table_ui($get, $post, $page_name, $table_name, $def, $customEditor = null) {
 
     // Declare global usages
     global $wpdb;
@@ -367,7 +367,7 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     if(isset($get[$idKey]))
     {
         $updateId = $get[$idKey];
-        if($updateId != NULL)
+        if($updateId != null)
         {
             // Prepare query for selecting entities
             $queryItems = faf_db_definition_non_calculated_keys($def);
@@ -467,7 +467,16 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
 
         echo '</tr>';
     }
-    echo '<tr><td>';
+    echo '</table>';
+
+    if($curr != null)
+        echo '<input type="hidden" id="updateId" name="updateId" value="' . $updateId .'"></input>';
+
+    // Provide extension custom editor
+    if(is_callable($customEditor))
+        call_user_func($customEditor, (isset($updateId) ? $updateId : null));
+
+    // Provide custom editor
     if($curr != null)
     {
         submit_button('Update');
@@ -475,11 +484,6 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def) {
     }
     else
         submit_button('Create');
-    echo '</td></tr>';
-    echo '</table>';
-
-    if($curr != null)
-        echo '<input type="hidden" id="updateId" name="updateId" value="' . $updateId .'"></input>';
 
     echo ' </form>';
 }

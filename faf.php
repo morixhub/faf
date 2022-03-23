@@ -99,7 +99,38 @@ function faf_admin_page_players() {
                 faf_db_constants::field_default => date_create('now')->add(new DateInterval('P1Y')),
                 faf_db_constants::field_required => true
             )
-        )
+        ),
+        function($updateId) {
+            
+            global $wpdb;
+
+            $roles = array();
+            if($updateId != null)
+            {
+                $query = 'SELECT id_role FROM ' . $wpdb->prefix . 'faf_players_roles WHERE id_player = ' . $updateId;
+                $res = $wpdb->get_results($query, 'ARRAY_A');
+
+                foreach($res as $record)
+                    array_push($roles, $record['id_role']);
+            }
+
+            $query = 'SELECT id FROM ' . $wpdb->prefix . 'faf_roles';
+            $res = $wpdb->get_results($query, 'ARRAY_A');
+
+            echo '<table>';
+            echo '<tr><td colspan="' . $wpdb->num_rows . '">Roles</td></tr>';
+            echo '<tr>';
+            foreach($res as $record)
+            {
+                $id = $record['id'];
+                echo '<td>';
+                    echo '<input type="checkbox" name="ctl_' . $id . '" id="ctl_' . $id . '"' . (in_array($id, $roles) ? 'checked' : '') . '></input>';
+                    echo '<label for=ctl_"' . $id . '">' . $id . '</label>';
+                echo '</td>';
+            }
+            echo '</tr>';
+            echo '</table>';
+        }
     );
 }
 
