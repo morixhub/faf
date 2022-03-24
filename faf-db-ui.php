@@ -121,7 +121,7 @@ function faf_db_definition_get_field_calculate($def, $key)
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_calculate, 5, null, false));
 }
 
-function faf_db_table_ui($get, $post, $page_name, $table_name, $def, $customEditor = null) {
+function faf_db_table_ui($get, $post, $page_name, $table_name, $def, $customValidator = null, $customEditor = null, $customInsertUpdate = null) {
 
     // Declare global usages
     global $wpdb;
@@ -174,14 +174,16 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def, $customEdit
         $removeId = $get['remove'];
         if(is_numeric($removeId))
         {
-            if($wpdb->delete($wpdb->prefix . $table_name, array($idKey => $removeId)))
-                echo 'Record ID ' . $removeId . ' was removed successfully';
-            else
+            $ret = $wpdb->delete($wpdb->prefix . $table_name, array($idKey => $removeId));
+
+            if(false === $ret)
                 echo 'An error occurred while removing record ID ' . $removeId;
+            else
+                echo 'Record ID ' . $removeId . ' was removed successfully';
         }
     }
     
-    // Process entity insertion
+    // Process entity insertion/update
     if(isset($post['submit']))
     {
         $updateId = NULL;
@@ -246,20 +248,48 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def, $customEdit
             }   
         }
 
-        if($updateId != NULL)
+        // Perform custom validation, if requested
+        $validRes = null;
+        if(is_callable($customValidator))
         {
-            if($wpdb->update($wpdb->prefix . $table_name, $fields, array($idKey => $updateId)))
-                echo 'Record updated successfully';
-            else
-                echo 'An error occurred while updating the new record';
+            $validRes = call_user_func($customValidator, $fields);
+
+            if($validRes != null)
+                echo 'Invalid data: ' . $validRes;
         }
-        else
+
+        if($validRes == null)
         {
-            if($wpdb->insert($wpdb->prefix . $table_name, $fields))
-                echo 'Record created successfully';
+            // Process insert/update
+            if($updateId != NULL)
+            {
+                $ret = $wpdb->update($wpdb->prefix . $table_name, $fields, array($idKey => $updateId));
+                
+                if(false === $ret)
+                    echo 'An error occurred while updating the new record';
+                else
+                    echo 'Record updated successfully';
+            }
             else
-                echo 'An error occurred while creating the new record';
+            {
+                $ret = $wpdb->insert($wpdb->prefix . $table_name, $fields);
+
+                if(false === $ret)
+                    echo 'An error occurred while creating the new record';
+                else
+                {
+                    $updateId = $wpdb->insert_id;
+                    echo 'Record created successfully';
+                }
+            }
+
+            // Provide extension logic for insert/update
+            if(is_callable($customInsertUpdate))
+                call_user_func($customInsertUpdate, (isset($updateId) ? $updateId : null), $post);
         }
+
+        // Reset updateId here so that subsequent parts of the page are not affected
+        $updateId = null;
     }
 
     // Prepare data

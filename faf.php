@@ -100,6 +100,16 @@ function faf_admin_page_players() {
                 faf_db_constants::field_required => true
             )
         ),
+        function($fields) {
+
+            $beginValidity = $fields['begin_validity'];
+            $endValidity = $fields['end_validity'];
+
+            if($beginValidity >= $endValidity)
+                return('Begin validity MUST preceed end validity');
+
+            return(null);
+        },
         function($updateId) {
             
             global $wpdb;
@@ -124,12 +134,63 @@ function faf_admin_page_players() {
             {
                 $id = $record['id'];
                 echo '<td>';
-                    echo '<input type="checkbox" name="ctl_' . $id . '" id="ctl_' . $id . '"' . (in_array($id, $roles) ? 'checked' : '') . '></input>';
-                    echo '<label for=ctl_"' . $id . '">' . $id . '</label>';
+                    echo '<input type="checkbox" name="ctl_role_' . $id . '" id="ctl_role_' . $id . '"' . (in_array($id, $roles) ? 'checked' : '') . '></input>';
+                    echo '<label for=ctl_role_"' . $id . '">' . $id . '</label>';
                 echo '</td>';
             }
             echo '</tr>';
             echo '</table>';
+        },
+        function($updateId, $post) {
+
+            global $wpdb;
+
+            // If no ID was provided, then give up
+            if($updateId == null)
+                return;
+
+            // Get existing roles
+            $roles = array();
+            if($updateId != null)
+            {
+                $query = 'SELECT id_role FROM ' . $wpdb->prefix . 'faf_players_roles WHERE id_player = ' . $updateId;
+                $res = $wpdb->get_results($query, 'ARRAY_A');
+
+                foreach($res as $record)
+                    array_push($roles, $record['id_role']);
+            }
+
+            // Collect new roles from post data
+            $newRoles = array();
+            foreach(array_keys($post) as $key)
+            {
+                if(str_starts_with($key, 'ctl_role_') && (bool)$post[$key])
+                    array_push($newRoles, substr($key, 9));
+            }
+
+            // Remove roles not set
+            foreach($roles as $role)
+            {
+                if(!in_array($role, $newRoles))
+                {
+                    $ret = $wpdb->delete($wpdb->prefix . 'faf_players_roles', array('id_player' => $updateId, 'id_role' => $role));
+
+                    if(false === $ret)
+                        echo 'Cannot update player roles [delete]';
+                }
+            }
+
+            // Set new roles
+            foreach($newRoles as $role)
+            {
+                if(!in_array($role, $roles))
+                {
+                    $ret = $wpdb->insert($wpdb->prefix . 'faf_players_roles', array('id_player' => $updateId, 'id_role' => $role));
+
+                    if(false === $ret)
+                        echo 'Cannot update player roles [insert]';
+                }
+            }
         }
     );
 }
