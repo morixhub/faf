@@ -128,7 +128,7 @@ function faf_admin_page_players() {
             $res = $wpdb->get_results($query, 'ARRAY_A');
 
             echo '<table>';
-            echo '<tr><td colspan="' . $wpdb->num_rows . '">Roles</td></tr>';
+            echo '<tr><td colspan="' . $wpdb->num_rows . '">Roles:</td></tr>';
             echo '<tr>';
             foreach($res as $record)
             {
@@ -238,6 +238,9 @@ function faf_admin_page_leagues() {
 
 function faf_admin_page_league_rounds() {
 
+    // Declare global usages
+    global $wpdb;
+
     faf_db_table_ui(
         $_GET,
         $_POST,
@@ -259,6 +262,10 @@ function faf_admin_page_league_rounds() {
                 faf_db_constants::field_label => 'Round name',
                 faf_db_constants::field_required => true
             ),
+            'enabled_teams_count' => array(
+                faf_db_constants::field_label => 'Enabled teams',
+                faf_db_constants::field_calculate => '(SELECT COUNT(*) FROM ' . $wpdb->prefix . 'faf_round_enabled_teams WHERE id_round = ' . faf_db_constants::main_query_name . '.id)'
+            ),
             'opening' => array(
                 faf_db_constants::field_label => 'Opening date',
                 faf_db_constants::field_type => faf_db_constants::field_type_date,
@@ -271,7 +278,91 @@ function faf_admin_page_league_rounds() {
                 faf_db_constants::field_default => date_create('now')->add(new DateInterval('P2W')),
                 faf_db_constants::field_required => true
             )
-        )
+        ),
+        null,
+        function($updateId) {
+            
+            global $wpdb;
+
+            $teams = array();
+            if($updateId != null)
+            {
+                $query = 'SELECT id_team FROM ' . $wpdb->prefix . 'faf_round_enabled_teams WHERE id_round = ' . $updateId;
+                $res = $wpdb->get_results($query, 'ARRAY_A');
+
+                foreach($res as $record)
+                    array_push($teams, $record['id_team']);
+            }
+
+            $query = 'SELECT id, name FROM ' . $wpdb->prefix . 'faf_teams';
+            $res = $wpdb->get_results($query, 'ARRAY_A');
+
+            echo '<table>';
+            echo '<tr><td colspan="' . $wpdb->num_rows . '">Enabled teams:</td></tr>';
+            echo '<tr>';
+            foreach($res as $record)
+            {
+                $id = $record['id'];
+                $name = $record['name'];
+                echo '<tr><td>';
+                    echo '<input type="checkbox" name="ctl_team_' . $id . '" id="ctl_team_' . $id . '"' . (in_array($id, $teams) ? 'checked' : '') . '></input>';
+                    echo '<label for=ctl_team_"' . $id . '">' . $name . '</label>';
+                echo '</td></tr>';
+            }
+            echo '</tr>';
+            echo '</table>';
+        },
+        function($updateId, $post) {
+
+            global $wpdb;
+
+            // If no ID was provided, then give up
+            if($updateId == null)
+                return;
+
+            // Get existing teams
+            $teams = array();
+            if($updateId != null)
+            {
+                $query = 'SELECT id_team FROM ' . $wpdb->prefix . 'faf_round_enabled_teams WHERE id_round = ' . $updateId;
+                $res = $wpdb->get_results($query, 'ARRAY_A');
+
+                foreach($res as $record)
+                    array_push($teams, $record['id_team']);
+            }
+
+            // Collect new teams from post data
+            $newTeams = array();
+            foreach(array_keys($post) as $key)
+            {
+                if(str_starts_with($key, 'ctl_team_') && (bool)$post[$key])
+                    array_push($newTeams, (int)substr($key, 9));
+            }
+
+            // Remove teams not set
+            foreach($teams as $team)
+            {
+                if(!in_array($team, $newTeams))
+                {
+                    $ret = $wpdb->delete($wpdb->prefix . 'faf_round_enabled_teams', array('id_round' => $updateId, 'id_team' => $team));
+
+                    if(false === $ret)
+                        echo 'Cannot update enabled teams [delete]';
+                }
+            }
+
+            // Set new teams
+            foreach($newTeams as $team)
+            {
+                if(!in_array($team, $teams))
+                {
+                    $ret = $wpdb->insert($wpdb->prefix . 'faf_round_enabled_teams', array('id_round' => $updateId, 'id_team' => $team));
+
+                    if(false === $ret)
+                        echo 'Cannot update enabled teams [insert]';
+                }
+            }
+        }
     );
 }
 
