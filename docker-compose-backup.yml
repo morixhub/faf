@@ -1,0 +1,33 @@
+# /faf-pilot-docker/docker-compose.yml
+---
+version: '3.3'
+services:
+    db:
+        container_name: 'faf-pilot-wordpress-db'
+        image: 'mysql:latest'
+        volumes:
+            - './data/mysql:/var/lib/mysql'
+        ports:
+            - 18766:3306
+        environment:
+            MYSQL_ROOT_PASSWORD: root1221
+            MYSQL_DATABASE: faf_pilot
+            MYSQL_USER: faf
+            MYSQL_PASSWORD: faf1221
+    wordpress:
+        container_name: 'faf-pilot-wordpress'
+        depends_on:
+            - db
+        image: 'wordpress:latest'
+        ports:
+            - '80:80'
+        environment:
+            WORDPRESS_DB_HOST: 'db:3306'
+            WORDPRESS_DB_USER: faf
+            WORDPRESS_DB_PASSWORD: faf1221
+            WORDPRESS_DB_NAME: faf_pilot
+        volumes:
+            - "./wordpress:/var/www/html"
+            - "./plugins:/var/www/html/wp-content/plugins"
+            - "./plugins/faf/faf-vw-sports-child-theme:/var/www/html/wp-content/themes/faf-vw-sports-child-theme"
+            
