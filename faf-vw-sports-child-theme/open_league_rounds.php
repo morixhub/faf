@@ -38,7 +38,7 @@ get_header(); ?>
                     echo '<td>' . $record['round_name'] . '</td>';
                     echo '<td>' . date_create_from_format('Y-m-d H:i:s', $record['round_opening'])->format('d/m/Y') . '</td>';
                     echo '<td>' . date_create_from_format('Y-m-d H:i:s', $record['round_closing'])->format('d/m/Y') . '</td>';
-                    echo '<td><a href="round_enter?id=' . $record['round_id'] . '">Participate</a></td>';
+                    echo '<td><a href="/faf-league-round-participation?id=' . $record['round_id'] . '">Participate</a></td>';
                     echo '</tr>';
                 }
 
