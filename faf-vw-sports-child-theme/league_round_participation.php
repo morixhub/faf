@@ -1,6 +1,7 @@
 <?php /* Template Name: faf-league-participation */ ?>
 
 <?php
+require_once(WP_PLUGIN_DIR . '/faf/faf-db-ui.php');
 get_header(); ?>
 
 <?php do_action( 'vw_sports_page_top' ); ?>
@@ -16,21 +17,63 @@ get_header(); ?>
         <?php
         if(isset($_GET['id']))
         {
+            global $wpdb;
+
             $query = 'SELECT L.id AS league_id, L.name AS league_name, R.id AS round_id, R.round_name AS round_name, R.opening AS round_opening, R.closing AS round_closing ' .
             'FROM ' . $wpdb->prefix . 'faf_leagues L INNER JOIN ' . $wpdb->prefix . 'faf_league_rounds R ON L.id = R.id_league ' .
             'WHERE R.id = ' . $_GET['id'];
             
             $res = $wpdb->get_results($query, 'ARRAY_A');
 
-            echo '<table class="wp-block-table">';
             foreach($res as $record)
             {
-                echo '<tr><td>League:</td><td>' . $record['league_name'] . '</td></tr>';
-                echo '<tr><td>Round:</td><td>' . $record['round_name'] . '</td></tr>';
-                echo '<tr><td>Round opening:</td><td>' . date_create_from_format('Y-m-d H:i:s', $record['round_opening'])->format('d/m/Y') . '</td></tr>';
-                echo '<tr><td>Round closing:</td><td>' . date_create_from_format('Y-m-d H:i:s', $record['round_closing'])->format('d/m/Y') . '</td></tr>';
+                echo '<h3>League: ' . $record['league_name'] . ', round: ' . $record['round_name'] . '</h3>';
+                echo '<h5>' . date_create_from_format('Y-m-d H:i:s', $record['round_opening'])->format('d/m/Y') . ' -> ' . date_create_from_format('Y-m-d H:i:s', $record['round_closing'])->format('d/m/Y') . '</h5>';
             }
-            echo '</table>';
+
+            echo '<hr/>';
+            echo '<h5>Selected players:</h5>';
+
+            echo '<hr/>';
+            echo '<h5>Available players:</h5>';
+
+            faf_db_table_select_ui(
+                $_GET,
+                $_POST,
+                'faf_players',
+                array(
+                    'id' => array(
+                        faf_db_constants::field_label => 'ID',
+                        faf_db_constants::field_type => faf_db_constants::field_type_id
+                    ),
+                    'name' => array(
+                        faf_db_constants::field_label => 'Player name',
+                        faf_db_constants::field_required => true
+                    ),
+                    'surname' => array(
+                        faf_db_constants::field_label => 'Player surname',
+                        faf_db_constants::field_required => true
+                    ),
+                    'roles' => array(
+                        faf_db_constants::field_label => 'Roles',
+                        faf_db_constants::field_calculate => '(SELECT GROUP_CONCAT(id_role SEPARATOR \', \') FROM ' . $wpdb->prefix . 'faf_players_roles WHERE id_player = ' . faf_db_constants::main_query_name . '.id GROUP BY id_player)'
+                    ),
+                    'import' => array(
+                        faf_db_constants::field_label => 'Import',
+                        faf_db_constants::field_type => faf_db_constants::field_type_bool
+                    ),
+                    'id_current_team' => array(
+                        faf_db_constants::field_label => 'Current team',
+                        faf_db_constants::field_source => function() {
+                            return(faf_data_source_teams());
+                        }
+                    )
+                ),
+                array(
+                    'Select' => 'select&id=' . $_GET['id']
+                ),
+                'begin_validity <= "' . date_create('now')->format('Y-m-d')  . '" AND ' . 'end_validity >= "' . date_create('now')->format('Y-m-d') . '"'
+            );
         }
         ?>
     </div>

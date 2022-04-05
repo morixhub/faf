@@ -517,3 +517,167 @@ function faf_db_table_ui($get, $post, $page_name, $table_name, $def, $customVali
 
     echo ' </form>';
 }
+
+function faf_db_table_select_ui($get, $post, $table_name, $def, $actions, $where = null) {
+
+    // Declare global usages
+    global $wpdb;
+
+    // Declare vars
+    $offset = 0;
+    $max_count = 2;
+
+    // Check table ID availability
+    $idKey = faf_db_definition_get_id_key($def);
+
+    if($idKey == null)
+    {
+        echo 'Error: DB definition specified for ' . $table_name . ' does not expose a valid key';
+        return;
+    }
+
+    // Process sources
+    $sources = array();
+
+    foreach(array_keys($def) as $key)
+    {
+        $source = faf_db_definition_get_field_source($def, $key);
+
+        if($source != null)
+        {
+            if(!is_callable($source))
+            {
+                echo 'Error: invalid callable for key ' . $key . ': ' . $source;
+                return;   
+            }
+            
+            $sources[$key] = call_user_func($source);
+        }
+    }
+
+    // Handle offset
+    if(isset($get['offset']))
+    {
+        $offset = $get['offset'];
+        if(is_numeric($offset))
+            $offset = (int)$offset;
+        else
+            $offset = 0;
+    }
+
+    // Prepare data
+    $queryItems = faf_db_definition_non_calculated_keys($def);
+
+    foreach(array_keys($def) as $key)
+    {
+        $calculate = faf_db_definition_get_field_calculate($def, $key);
+        if($calculate != null)
+            array_push($queryItems, $calculate . ' AS ' . $key);
+    }
+
+    $query = 'SELECT ' . implode(', ', $queryItems) . ' FROM ' . $wpdb->prefix . $table_name . ' AS ' . faf_db_constants::main_query_name;
+    
+    if($where != null)
+        $query = $query . ' WHERE ' . $where;
+
+    $res = $wpdb->get_results($query, 'ARRAY_A');
+
+    // Prepare table header
+    echo '<table class="wp-block-table">';
+    echo '<tr>';
+        foreach(array_keys($def) as $key)
+        {
+            echo '<th>' . faf_db_definition_get_field_label($def, $key) . '</th>';
+        }
+        echo '<th>Operations</th>';
+    echo '</tr>';
+
+    // Prepare table body
+    $idx = -1;
+    $rendered = 0;
+    $following = false;
+    foreach($res as $record)
+    {
+        $idx++;
+
+        if($rendered >= $max_count)
+        {
+            $following = true;
+            break;
+        }
+
+        if($idx < $offset)
+            continue;
+
+        echo '<tr>';
+            foreach(array_keys($def) as $key)
+            {
+                echo '<td>';
+
+                $source = faf_db_definition_get_field_source($def, $key);
+                if($source != null)
+                {
+                    if(isset($sources[$key], $record[$key]))
+                        echo $sources[$key][$record[$key]];
+                }
+                else
+                {
+                    $fieldType = faf_db_definition_get_field_type($def, $key); 
+                    switch($fieldType)
+                    {
+                        case faf_db_constants::field_type_bool:
+                            if((int)$record[$key])
+                                echo '&check;';
+                            break;
+
+                        case faf_db_constants::field_type_date:
+                            echo date_create_from_format('Y-m-d H:i:s', $record[$key])->format('d/m/Y');
+                            break;
+
+                        default:
+                            echo $record[$key];
+                            break;
+                    }
+                }
+
+                echo '</td>';
+            }
+            echo '<td>';
+                foreach(array_keys($actions) as $action)
+                {
+                    $actionUrl = $actions[$action];
+                    echo '<a href="?'. $actionUrl . '&offset=' . $offset . '">' . $action . '</a>&nbsp;&nbsp;';
+                }
+            echo '</td>';
+        echo '</tr>';
+
+        $rendered++;
+    } 
+
+    echo '<p>';
+    if($offset > 0)
+    {
+        $qstr = $get;
+        $qstr['offset'] =  max(0, $offset - $max_count);
+        $qstr = http_build_query($qstr);
+        echo '<a href="?' . $qstr . '">&lt;&nbsp;</a>';
+    }
+    else
+        echo '&lt;&nbsp;';
+
+    if($following)
+    {
+        $qstr = $get;
+        $qstr['offset'] =  ($offset + $max_count);
+        $qstr = http_build_query($qstr);
+        echo '<a href="?offset=' . $qstr . '">&nbsp;&gt;</a>';
+    }
+    else
+        echo '&nbsp;&gt;';
+
+    echo '</p>';
+
+
+    // Prepare table footer
+    echo '</table>';
+}
