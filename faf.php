@@ -36,7 +36,6 @@ function faf_admin_page_teams() {
     faf_db_table_ui(
         $_GET,
         $_POST,
-        'faf_admin_teams_page_slug',
         'faf_teams',
         array(
             'id' => array(
@@ -58,7 +57,6 @@ function faf_admin_page_players() {
     faf_db_table_ui(
         $_GET,
         $_POST,
-        'faf_admin_players_page_slug',
         'faf_players',
         array(
             'id' => array(
@@ -100,6 +98,7 @@ function faf_admin_page_players() {
                 faf_db_constants::field_required => true
             )
         ),
+        null,
         function($fields) {
 
             $beginValidity = $fields['begin_validity'];
@@ -200,7 +199,6 @@ function faf_admin_page_player_roles() {
     faf_db_table_ui(
         $_GET,
         $_POST,
-        'faf_admin_player_roles_page_slug',
         'faf_roles',
         array(
             'id' => array(
@@ -220,7 +218,6 @@ function faf_admin_page_leagues() {
     faf_db_table_ui(
         $_GET,
         $_POST,
-        'faf_admin_leagues_page_slug',
         'faf_leagues',
         array(
             'id' => array(
@@ -244,7 +241,6 @@ function faf_admin_page_league_rounds() {
     faf_db_table_ui(
         $_GET,
         $_POST,
-        'faf_admin_league_rounds_page_slug',
         'faf_league_rounds',
         array(
             'id' => array(
@@ -279,6 +275,7 @@ function faf_admin_page_league_rounds() {
                 faf_db_constants::field_required => true
             )
         ),
+        null,
         null,
         function($updateId) {
             

@@ -8,7 +8,6 @@ get_header(); ?>
 
 <main id="maincontent" class="middle-align pt-5" role="main"> 
     
-    
     <div class="container">
         <?php while ( have_posts() ) : the_post();
             get_template_part( 'template-parts/content-page'); 
@@ -37,7 +36,7 @@ get_header(); ?>
             echo '<hr/>';
             echo '<h5>Available players:</h5>';
 
-            faf_db_table_select_ui(
+            faf_db_table_ui(
                 $_GET,
                 $_POST,
                 'faf_players',
@@ -69,10 +68,17 @@ get_header(); ?>
                         }
                     )
                 ),
+                'begin_validity <= "' . date_create('now')->format('Y-m-d')  . '" AND ' . 'end_validity >= "' . date_create('now')->format('Y-m-d') . '"',
+                null,
+                null,
+                null,
                 array(
                     'Select' => 'select&id=' . $_GET['id']
                 ),
-                'begin_validity <= "' . date_create('now')->format('Y-m-d')  . '" AND ' . 'end_validity >= "' . date_create('now')->format('Y-m-d') . '"'
+                'wp-block-table',
+                false,
+                false,
+                false
             );
         }
         ?>
