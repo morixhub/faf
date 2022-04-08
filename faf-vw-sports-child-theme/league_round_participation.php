@@ -16,8 +16,6 @@ get_header(); ?>
         <?php
         if(isset($_GET['id']))
         {
-            global $wpdb;
-
             $query = 'SELECT L.id AS league_id, L.name AS league_name, R.id AS round_id, R.round_name AS round_name, R.opening AS round_opening, R.closing AS round_closing ' .
             'FROM ' . $wpdb->prefix . 'faf_leagues L INNER JOIN ' . $wpdb->prefix . 'faf_league_rounds R ON L.id = R.id_league ' .
             'WHERE R.id = ' . $_GET['id'];
@@ -33,6 +31,49 @@ get_header(); ?>
             echo '<hr/>';
             echo '<h5>Selected players:</h5>';
 
+            faf_db_table_ui(
+                $_GET,
+                $_POST,
+                'faf_players',
+                array(
+                    'id' => array(
+                        faf_db_constants::field_label => 'ID',
+                        faf_db_constants::field_type => faf_db_constants::field_type_id
+                    ),
+                    'name' => array(
+                        faf_db_constants::field_label => 'Player name',
+                    ),
+                    'surname' => array(
+                        faf_db_constants::field_label => 'Player surname',
+                    ),
+                    'selected_role' => array(
+                        faf_db_constants::field_label => 'Selected role',
+                        faf_db_constants::field_calculate => '(SELECT id_role FROM ' . $wpdb->prefix . 'faf_round_selections WHERE id_user = ' . faf_get_current_user_id() . ' AND id_round=' . $_GET['id'] . ')'
+                    ),
+                    'import' => array(
+                        faf_db_constants::field_label => 'Import',
+                        faf_db_constants::field_type => faf_db_constants::field_type_bool
+                    ),
+                    'id_current_team' => array(
+                        faf_db_constants::field_label => 'Current team',
+                        faf_db_constants::field_source => function() {
+                            return(faf_data_source_teams());
+                        }
+                    )
+                ),
+                'id IN (SELECT id_player FROM ' . $wpdb->prefix . 'faf_round_selections WHERE id_user = ' . faf_get_current_user_id() . ' AND id_round=' . $_GET['id'] . ')',
+                null,
+                null,
+                null,
+                array(
+                    'Remove' => 'remove&id=' . $_GET['id']
+                ),
+                'wp-block-table',
+                false,
+                false,
+                false
+            );
+
             echo '<hr/>';
             echo '<h5>Available players:</h5>';
 
@@ -47,11 +88,9 @@ get_header(); ?>
                     ),
                     'name' => array(
                         faf_db_constants::field_label => 'Player name',
-                        faf_db_constants::field_required => true
                     ),
                     'surname' => array(
                         faf_db_constants::field_label => 'Player surname',
-                        faf_db_constants::field_required => true
                     ),
                     'roles' => array(
                         faf_db_constants::field_label => 'Roles',
@@ -68,7 +107,7 @@ get_header(); ?>
                         }
                     )
                 ),
-                'begin_validity <= "' . date_create('now')->format('Y-m-d')  . '" AND ' . 'end_validity >= "' . date_create('now')->format('Y-m-d') . '"',
+                'begin_validity <= "' . date_create('now')->format('Y-m-d')  . '" AND ' . 'end_validity >= "' . date_create('now')->format('Y-m-d') . '" AND id NOT IN (SELECT id_player FROM ' . $wpdb->prefix . 'faf_round_selections WHERE id_user = ' . faf_get_current_user_id() . ' AND id_round=' . $_GET['id'] . ')',
                 null,
                 null,
                 null,

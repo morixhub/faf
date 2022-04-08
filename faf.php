@@ -99,13 +99,28 @@ function faf_admin_page_players() {
             )
         ),
         null,
-        function($fields) {
+        function($fields, $post) {
 
+            // Check player validity
             $beginValidity = $fields['begin_validity'];
             $endValidity = $fields['end_validity'];
 
             if($beginValidity >= $endValidity)
                 return('Begin validity MUST preceed end validity');
+
+            // Check that players has at least one role
+            $roleset = false;
+            foreach(array_keys($post) as $key)
+            {
+                if(str_starts_with($key, 'ctl_role_') && (bool)$post[$key])
+                {
+                    $roleset = true;
+                    break;   
+                }
+            }
+
+            if(!$roleset)
+                return('At least one role must be assigned to the player');
 
             return(null);
         },

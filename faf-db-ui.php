@@ -121,8 +121,8 @@ function faf_db_definition_get_field_calculate($def, $key)
     return(faf_db_definition_get_field_property($def, $key, faf_db_constants::field_calculate, 5, null, false));
 }
 
-function faf_db_table_ui($get, $post, $table_name, $def, $where = null, $customValidator = null, $customEditor = null, $customInsertUpdate = null, $actions = null, $class = 'tablebox', $supports_insert = true, $supports_update = true, $supports_delete = true) {
-
+function faf_db_table_ui($get, $post, $table_name, $def, $where = null, $customValidator = null, $customEditor = null, $customInsertUpdate = null, $actions = null, $class = 'tablebox', $supports_insert = true, $supports_update = true, $supports_delete = true)
+{
     // Declare global usages
     global $wpdb;
 
@@ -259,10 +259,10 @@ function faf_db_table_ui($get, $post, $table_name, $def, $where = null, $customV
             $validRes = null;
             if(is_callable($customValidator))
             {
-                $validRes = call_user_func($customValidator, $fields);
+                $validRes = call_user_func($customValidator, $fields, $post);
 
                 if($validRes != null)
-                    echo 'Invalid data: ' . $validRes;
+                    echo '<script>setTimeout(function() { alert("' . $validRes . '"); }, 1);</script>';
             }
 
             if($validRes == null)
@@ -474,6 +474,7 @@ function faf_db_table_ui($get, $post, $table_name, $def, $where = null, $customV
     {
         // Prepare create/update form
         $qstr = $get;
+        unset($qstr['id']);
         $qstr = http_build_query($qstr);
 
         echo '<form action="?' . $qstr . '" method="post" enctype="multipart/form-data">';
@@ -586,4 +587,11 @@ function faf_db_table_ui($get, $post, $table_name, $def, $where = null, $customV
 
         echo ' </form>';
     }
+}
+
+function faf_get_current_user_id()
+{
+    global $current_user;
+    wp_get_current_user();
+    return($current_user->ID);
 }
