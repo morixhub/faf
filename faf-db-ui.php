@@ -385,10 +385,20 @@ function faf_db_table_ui($get, $post, $table_name, $def, $where = null, $customV
             echo '<td>';
                 if($actions != null)
                 {
-                    foreach(array_keys($actions) as $action)
+                    $actionsArray = array();
+
+                    if(is_callable($actions))
+                        $actionsArray = call_user_func($actions, $record[$idKey]);
+                    else if(is_array($actions))
+                        $actionsArray = $actions;
+
+                    if(is_array($actionsArray))
                     {
-                        $actionUrl = $actions[$action];
-                        echo '<a href="?'. $actionUrl . '&offset=' . $offset . '">' . $action . '</a>&nbsp;&nbsp;';
+                        foreach(array_keys($actionsArray) as $action)
+                        {
+                            $actionUrl = $actionsArray[$action];
+                            echo '<a href="?'. $actionUrl . '&offset=' . $offset . '">' . $action . '</a>&nbsp;&nbsp;';
+                        }
                     }
                 }
                 else

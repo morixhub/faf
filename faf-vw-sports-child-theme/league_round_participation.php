@@ -92,10 +92,10 @@ get_header(); ?>
                     'surname' => array(
                         faf_db_constants::field_label => 'Player surname',
                     ),
-                    'roles' => array(
+                    /* //!! 'roles' => array(
                         faf_db_constants::field_label => 'Roles',
                         faf_db_constants::field_calculate => '(SELECT GROUP_CONCAT(id_role SEPARATOR \', \') FROM ' . $wpdb->prefix . 'faf_players_roles WHERE id_player = ' . faf_db_constants::main_query_name . '.id GROUP BY id_player)'
-                    ),
+                    ), */
                     'import' => array(
                         faf_db_constants::field_label => 'Import',
                         faf_db_constants::field_type => faf_db_constants::field_type_bool
@@ -111,9 +111,21 @@ get_header(); ?>
                 null,
                 null,
                 null,
-                array(
-                    'Select' => 'select&id=' . $_GET['id']
-                ),
+                function ($id_player)
+                {
+                    global $wpdb;
+                    
+                    $gen = array();
+
+                    $query = 'SELECT id_role FROM ' . $wpdb->prefix . 'faf_players_roles WHERE id_player = ' . $id_player;
+
+                    $res = $wpdb->get_results($query, 'ARRAY_A');
+
+                    foreach($res as $record)
+                        $gen['Select as ' . $record['id_role']] = 'select&id=' . $id_player . '&role=' . $record['id_role'];
+
+                    return($gen);
+                },
                 'wp-block-table',
                 false,
                 false,
