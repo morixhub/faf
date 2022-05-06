@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.7.37, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.38, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: faf_pilot
 -- ------------------------------------------------------
@@ -38,6 +38,7 @@ CREATE TABLE `wp_faf_players_roles` (
 
 LOCK TABLES `wp_faf_players_roles` WRITE;
 /*!40000 ALTER TABLE `wp_faf_players_roles` DISABLE KEYS */;
+INSERT INTO `wp_faf_players_roles` VALUES (16,'DL'),(16,'QB'),(18,'DL'),(18,'K'),(18,'QB'),(18,'RB'),(18,'WR'),(22,'DL'),(22,'K'),(22,'OL'),(22,'QB'),(21,'DL'),(17,'QB'),(17,'RB'),(17,'WR'),(28,'OL'),(28,'QB');
 /*!40000 ALTER TABLE `wp_faf_players_roles` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -50,4 +51,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-02-28  0:10:05
+-- Dump completed on 2022-05-06 21:17:55

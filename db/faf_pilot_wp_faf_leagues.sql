@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.7.37, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.38, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: faf_pilot
 -- ------------------------------------------------------
@@ -16,26 +16,28 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `wp_faf_team`
+-- Table structure for table `wp_faf_leagues`
 --
 
-DROP TABLE IF EXISTS `wp_faf_team`;
+DROP TABLE IF EXISTS `wp_faf_leagues`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `wp_faf_team` (
+CREATE TABLE `wp_faf_leagues` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(256) NOT NULL,
+  `description` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `wp_faf_team`
+-- Dumping data for table `wp_faf_leagues`
 --
 
-LOCK TABLES `wp_faf_team` WRITE;
-/*!40000 ALTER TABLE `wp_faf_team` DISABLE KEYS */;
-/*!40000 ALTER TABLE `wp_faf_team` ENABLE KEYS */;
+LOCK TABLES `wp_faf_leagues` WRITE;
+/*!40000 ALTER TABLE `wp_faf_leagues` DISABLE KEYS */;
+INSERT INTO `wp_faf_leagues` VALUES (1,'Campionato 1','Campionato di provaxxx');
+/*!40000 ALTER TABLE `wp_faf_leagues` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -47,4 +49,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-02-28  0:10:06
+-- Dump completed on 2022-05-06 21:17:55

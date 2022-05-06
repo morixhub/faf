@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.7.37, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.38, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: faf_pilot
 -- ------------------------------------------------------
@@ -44,6 +44,7 @@ CREATE TABLE `wp_faf_round_selections` (
 
 LOCK TABLES `wp_faf_round_selections` WRITE;
 /*!40000 ALTER TABLE `wp_faf_round_selections` DISABLE KEYS */;
+INSERT INTO `wp_faf_round_selections` VALUES (1,5,18,'DL');
 /*!40000 ALTER TABLE `wp_faf_round_selections` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -56,4 +57,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-02-28  0:10:03
+-- Dump completed on 2022-05-06 21:17:55

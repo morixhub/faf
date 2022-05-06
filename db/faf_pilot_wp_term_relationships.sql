@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.7.37, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.38, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: faf_pilot
 -- ------------------------------------------------------
@@ -37,7 +37,7 @@ CREATE TABLE `wp_term_relationships` (
 
 LOCK TABLES `wp_term_relationships` WRITE;
 /*!40000 ALTER TABLE `wp_term_relationships` DISABLE KEYS */;
-INSERT INTO `wp_term_relationships` VALUES (1,1,0),(5,2,0),(21,3,0),(49,5,0),(56,4,0),(61,4,0),(63,4,0),(66,4,0);
+INSERT INTO `wp_term_relationships` VALUES (1,1,0),(5,2,0),(21,3,0),(49,5,0),(56,4,0),(61,4,0),(63,4,0),(66,4,0),(74,6,0),(84,7,0),(89,4,0);
 /*!40000 ALTER TABLE `wp_term_relationships` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -50,4 +50,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-02-28  0:10:05
+-- Dump completed on 2022-05-06 21:17:55

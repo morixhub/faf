@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.7.37, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.38, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: faf_pilot
 -- ------------------------------------------------------
@@ -30,7 +30,7 @@ CREATE TABLE `wp_terms` (
   PRIMARY KEY (`term_id`),
   KEY `slug` (`slug`(191)),
   KEY `name` (`name`(191))
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -39,7 +39,7 @@ CREATE TABLE `wp_terms` (
 
 LOCK TABLES `wp_terms` WRITE;
 /*!40000 ALTER TABLE `wp_terms` DISABLE KEYS */;
-INSERT INTO `wp_terms` VALUES (1,'Uncategorized','uncategorized',0),(2,'twentytwentytwo','twentytwentytwo',0),(3,'twentytwenty','twentytwenty',0),(4,'Main','main',0),(5,'vw-sports','vw-sports',0);
+INSERT INTO `wp_terms` VALUES (1,'Uncategorized','uncategorized',0),(2,'twentytwentytwo','twentytwentytwo',0),(3,'twentytwenty','twentytwenty',0),(4,'Main','main',0),(5,'vw-sports','vw-sports',0),(6,'vw-sports-child-theme','vw-sports-child-theme',0),(7,'faf-vw-sports-child-theme','faf-vw-sports-child-theme',0);
 /*!40000 ALTER TABLE `wp_terms` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -52,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-02-28  0:10:04
+-- Dump completed on 2022-05-06 21:17:55
